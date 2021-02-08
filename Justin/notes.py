@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 
-# code in this file includes small samples of code from https://github.com/drsjb80/HPotter
+# code in this file includes small samples of code from https://github.com/The-Mostly-Muggles/HPotter
 # as a way of seeing how certain syntax works.
 # The code in this file is not necessarily intended to compile or execute.
 
