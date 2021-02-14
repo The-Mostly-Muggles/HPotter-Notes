@@ -1,4 +1,5 @@
 # https://python-iptables.readthedocs.io/en/latest/examples.html
+# https://ldx.github.io/python-iptables/usage.html#match
 
 >>> import iptc
 >>> rule = iptc.Rule()
