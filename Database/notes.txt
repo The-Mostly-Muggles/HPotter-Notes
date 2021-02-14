@@ -1,0 +1,7 @@
+#To install a convenient and open-source SQLite manager, named DB Browser for SQLite, run these commands from the terminal:
+
+sudo apt-get update
+sudo apt-get install sqlite3
+sudo apt-get install sqlitebrowser
+
+#After completion, the application is available under Programming/DB Browser for SQLite.
