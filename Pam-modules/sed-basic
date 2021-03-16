@@ -1,0 +1,65 @@
+# getting cozier with sed
+
+There are some similar alternatives in linux for pattern matching and replacement in various places in various folders but sed is awesome- just some notes I collected along the way to help with figuring out the exact commands I used. Always many ways to skin a cat so I'm sure all of this could have been done with greater brevity.
+
+Here's a list of the types of changes tried in varies places and ways throughout the modules: 
+default=bad, default=die, new_authtok_reqd=ok, new_authtok_reqd=done, user_unknown=bad, requisite, nullok, pam_deny.so, pam_unix.so
+
+## Stream EDitor
+
+1. sed "a" command lets us append lines to a file, based on the line number or regex provided. Append = afteer
+
+2. sed "i" command lets us insert lines in a file, based on the line number or regex provided. Insert = before
+
+3. sed with option -i will edit the file in place, needed to actually save changes
+
+
+Append Line using Regular Expression/Pattern
+
+ sed '/PATTERN/ a <LINE-TO-BE-ADDED>' FILE.txt
+
+#### Used to try removing every occurance of nullok_secure from the pam.d folder
+         matches      replaces with// nothing between the delimiters
+> sed 's/\nullok_secure\//g' -i /etc/pam.d
+
+sed -e 's/\<regex-for-word\>//g' input > output
+
+#### How to match a specific line number
+sed '/17/
+
+#### How to delete specific line number
+sed -i '33d' file
+
+To delete all words ending with a letter ‘g’ in each line, enter:
+sed -e 's/\<[a-zA-Z0-9]*[g|G]\>//g' input
+
+### echo 'content' >>[redirect stdout append]  file      
+Another great tool especially when line order was not stict
+
+RUN sed "s/user_unknown=bad/user_unknown=ok/g" -i /etc/pam.d/*    # replace  bad with ok
+RUN sed "s/^@/#/g" -i /etc/pam.d/login                            # Comment out any line starting with an @
+RUN echo '@include common-auth' >> /etc/pam.d/login               # Append back one '@.. line 
+RUN sed "s/required/sufficient/g" -i /etc/pam.d/common-auth       # Change all required to sufficient in file /common-auth
+
+### Comment and uncomment everyline
+
+comment
+
+> sed -i 's/^/#/g' /example/file/here.txt
+
+uncomment
+
+> sed -i 's/^#//g' /example/file/here.txt
+
+Within our context
+
+> RUN sed "s/^/#/g" -i /etc/pam.d/*
+> RUN sed "s/#//g" -i /etc/pam.d/*
+
+
+
+
+
+
+
+

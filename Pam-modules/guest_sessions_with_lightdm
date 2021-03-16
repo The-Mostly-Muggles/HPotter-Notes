@@ -1,0 +1,29 @@
+# Notes and snippets from my attempt to use lightdm to allow guest users remote login [did not work for me]
+
+this suggested example did not work or make sense
+sudo sh -c 'printf "[Seat:*]\nallow-guest=true\n" > /etc/lightdm/lightdm.conf.d/40-enable-guest.conf'
+
+sudo apt install lightdm
+
+
+conf file here
+/etc/lightdm/lightdm.conf
+
+
+empty
+/etc/lightdm/lightdm.conf.d/
+
+
+
+
+[Seat:*]
+#autologin-user=
+#autologin-user-timeout=0
+
+
+
+[Seat:*]
+greeter-hide-users=false
+
+
+xserver-allow-tcp=true

@@ -1,0 +1,48 @@
+# Pam modules and control flags [general]
+
+
+## Modules [reads stack from top to bottom]
+
+> auth
+
+The module tests whether a user is authenticated or authorized to use a service or application. For example, the module might request and verify a password. Such modules can also set credentials, such as a group membership or a Kerberos ticket.
+
+> account
+
+The module tests whether an authenticated user is allowed access to a service or application. For example, the module might check if a user account has expired or if a user is allowed to use a service at a given time.
+
+> password
+
+The module handles updates to an authentication token.
+
+> session
+
+The module configures and manages user sessions, performing tasks such as mounting or unmounting a user's home directory.
+
+
+---
+
+
+## Control flags tell PAM what to do with results
+
+optional
+
+The module is required for authentication if it is the only module listed for a service.
+
+required
+
+The module must succeed for access to be granted. PAM continues to execute the remaining modules in the stack whether the module succeeds or fails. PAM does not immediately inform the user of the failure.
+
+requisite
+
+The module must succeed for access to be granted. If the module succeeds, PAM continues to execute the remaining modules in the stack. However, if the module fails, PAM notifies the user immediately and does not continue to execute the remaining modules in the stack.
+
+sufficient
+
+If the module succeeds, PAM does not process any remaining modules of the same operation type. If the module fails, PAM processes the remaining modules of the same operation type to determine overall success or failure.
+
+The control flag field can also define one or more rules that specify the action that PAM should take depending on the value that a module returns. Each rule takes the form value=action, and the rules are enclosed in square brackets, for example:
+
+[user_unknown=ignore success=ok ignore=ignore default=bad]
+
+

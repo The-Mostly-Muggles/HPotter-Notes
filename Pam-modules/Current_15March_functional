@@ -1,0 +1,73 @@
+#sshd
+---
+FROM debian:latest
+EXPOSE 22
+RUN apt update && apt -y install openssh-server && mkdir /var/run/ssh
+d
+RUN service ssh restart
+RUN echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
+RUN echo 'PermitEmptyPasswords yes' >> /etc/ssh/sshd_config
+RUN echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config
+RUN echo 'PubkeyAuthentication  no' >> /etc/ssh/sshd_config
+RUN service ssh restart
+
+RUN sed "s/\bpam_.*\.so\b/pam_permit.so/g" -i /etc/pam.d/*
+RUN sed  "s/\\[success=1 default=ignore\]\/\[success=2 default=ignore\]//g" -i  /etc/pam.d/common-auth
+RUN sed "17 a auth      \[success=1 default=ignore\]        pam_succeed_if.so user = admin" -i /etc/pam.d/common-auth
+RUN sed "s/required/sufficient/g" -i /etc/pam.d/*
+RUN sed "s/requisite/sufficient/g" -i /etc/pam.d/*
+RUN sed  "s/nullok_secure//g" -i /etc/pam.d/*
+
+CMD ["/usr/sbin/sshd","-D"]
+---
+
+
+#telnetd [allows any user to drop into a shell]
+---
+FROM debian:latest
+EXPOSE 23
+
+RUN apt-get update && apt-get -y install inetutils-telnetd
+RUN useradd -m user
+RUN usermod -a -G user root
+RUN usermod -a -G root user
+
+RUN echo 'telnet    stream  tcp nowait user:root  /usr/sbin/tcpd /us
+r/sbin/telnetd --auth mode=none --exec-login=/bin/bash' >> /etc/inet
+d.conf
+
+RUN echo 'tcpmux/telnet stream  tcp nowait  root:user    /usr/sbin/t
+cpd /usr/sbin/telnetd --auth mode=none --exec-login=/bin/bash' >> /e
+tc/inetd.conf
+
+RUN sed  "s/nullok_secure//g" -i /etc/pam.d/*
+RUN sed "s/\bpam_.*\.so\b/pam_permit.so/g" -i /etc/pam.d/*
+RUN sed "s/requisite/sufficient/g" -i /etc/pam.d/common-*
+RUN sed "s/required/sufficient/g" -i /etc/pam.d/common-*
+RUN sed "s/requisite/sufficient/g" -i /etc/pam.d/login
+RUN sed "s/user_unknown=bad/user_unknown=ignore/g" -i /etc/pam.d/*
+RUN echo 'pts/0' >> /etc/securetty
+RUN echo '+:ALL:ALL' >> /etc/security/access.conf
+
+CMD [ "/usr/sbin/inetutils-inetd", "-d"]
+---
+
+#telnetd2 [prompts for username- root automagically gets logged in]
+---
+FROM debian:latest
+EXPOSE 23
+
+RUN apt-get update && apt-get -y install inetutils-telnetd
+RUN echo 'telnet stream tcp nowait root /usr/sbin/tcpd     /usr/sbin/
+telnetd' >> /etc/inetd.conf
+RUN sed "s/user_unknown=bad/user_unknown=ignore/g" -i /etc/pam.d/*
+RUN sed  "s/nullok_secure//g" -i /etc/pam.d/*
+RUN sed "s/\bpam_.*\.so\b/pam_permit.so/g" -i /etc/pam.d/*
+RUN sed "s/requisite/sufficient/g" -i /etc/pam.d/common-*
+RUN echo 'pts/0' >> /etc/securetty
+RUN echo '+:ALL:ALL' >> /etc/security/access.conf
+
+CMD [ "/usr/sbin/inetutils-inetd", "-d"]
+---
+
+Pretty sure many of these lines are unnecessary for current functionality and will be able to reduce

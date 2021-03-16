@@ -1,0 +1,138 @@
+FROM debian:latest
+EXPOSE 23
+
+RUN apt-get update && apt-get -y install inetutils-telnetd
+RUN useradd -m user
+RUN usermod -a -G user root
+RUN usermod -a -G root user
+
+
+RUN echo 'telnet    stream  tcp nowait user:root  /usr/sbin/tcpd /usr/sbin/telnetd --aut
+h mode=none --exec-login=/bin/bash' >> /etc/inetd.conf
+
+RUN echo 'tcpmux/telnet stream  tcp nowait  root    /usr/sbin/tcpd /usr/sbin/telnetd --a
+uth mode=none --exec-login=/bin/bash' >> /etc/inetd.conf
+
+#RUN echo 'telnetd: DENY ALL ALLOW root \
+#                         :spawn --exec-login=/bin/bash \
+#                                /bin/login  -f root' >> /etc/hosts.allow
+
+
+#RUN echo 'telnetd: ALLOW ALL EXCEPT root \
+#                          :spawn --exec-login=/bin/bash \
+#                                /bin/login  -f user' >> /etc/hosts.allow
+
+
+RUN sed "s/\bpam_.*\.so\b/pam_permit.so/g" -i /etc/pam.d/*
+RUN sed "s/requisite/sufficient/g" -i /etc/pam.d/common-*
+RUN sed "s/required/sufficient/g" -i /etc/pam.d/common-*
+RUN sed "s/requisite/sufficient/g" -i /etc/pam.d/login
+RUN sed "s/user_unknown=bad/user_unknown=ignore/g" -i /etc/pam.d/*
+#RUN sed "s/^@/#/g" -i /etc/pam.d/login
+RUN sed "s/^\b#CONSOLE\b/CONSOLE/g" -i /etc/login.defs
+RUN sed "s|tty01|tty01:pts/0:pts/1:pts/3|g" -i /etc/login.defs
+
+#RUN echo '@include common-auth' >> /etc/pam.d/login
+#RUN sed "s/required/sufficient/g" -i /etc/pam.d/common-auth
+
+#RUN sed "s/[success=ok ignore=ignore module_unknown=ignore default=bad]/[success=ok ign
+ore=ignore module_unknown=ok default=ok]/g" -i /etc/pam.d/login
+
+#RUN sed "s/[success=ok new_authtok_reqd=ok ignore=ignore user_unknown=bad default=die]/
+[success=ok new_authtok_reqd=ok ignore=ignore user_unknown=ok default=ignore]/g" -i /etc
+/pam.d/login
+
+
+#RUN sed "s/^/#/g" -i /etc/pam.d/*
+RUN echo 'pts/0' >> /etc/securetty
+RUN echo 'pts/1' >> /etc/securetty
+RUN echo 'pts/2' >> /etc/securetty
+RUN echo '+:ALL:ALL' >> /etc/security/access.conf
+
+CMD [ "/usr/sbin/inetutils-inetd", "-d"]
+
+
+---
+
+FROM debian:latest
+EXPOSE 23
+
+RUN apt-get update && apt-get -y install inetutils-telnetd
+RUN useradd -m user
+RUN usermod -a -G user root
+RUN usermod -a -G root user
+RUN echo 'root:toor' | chpasswd
+
+RUN echo 'telnet stream tcp nowait user /usr/sbin/tcpd /usr/sbin/telnetd --auth mode=non
+e --exec-login=/bin/bash' >> /etc/inetd.conf
+
+RUN echo 'tcpmux/+telnet    stream  tcp nowait  root    /ect.service /usr/sbin/telnetd -
+-auth mode=none --exec-login=/bin/bash' >> /etc/inetd.conf
+
+RUN sed "s/\bpam_.*\.so\b/pam_permit.so/g" -i /etc/pam.d/*
+RUN sed "s/requisite/sufficient/g" -i /etc/pam.d/common-*
+RUN sed "s/required/sufficient/g" -i /etc/pam.d/common-*
+RUN sed "s/requisite/sufficient/g" -i /etc/pam.d/login
+RUN sed "s/user_unknown=bad/user_unknown=ignore/g" -i /etc/pam.d/*
+RUN sed "s/^\b#CONSOLE\b/CONSOLE/g" -i /etc/login.defs
+RUN sed "s|tty01|tty01:pts/0:pts/1:pts/3|g" -i /etc/login.defs
+RUN echo 'pts/0' >> /etc/securetty
+RUN echo 'pts/1' >> /etc/securetty
+RUN echo 'pts/2' >> /etc/securetty
+RUN echo '+:ALL:ALL' >> /etc/security/access.conf
+
+CMD [ "/usr/sbin/inetutils-inetd", "-d"]
+
+---
+
+FROM debian:latest
+EXPOSE 23
+
+RUN apt-get update && apt-get -y install inetutils-telnetd
+RUN useradd -m user
+RUN usermod -a -G user root
+RUN usermod -a -G root user
+
+
+RUN echo 'telnet    stream  tcp nowait user:root  /usr/sbin/tcpd /usr/sbin/telnetd --auth mode=none --e
+xec-login=/bin/bash' >> /etc/inetd.conf
+
+RUN echo 'tcpmux/telnet stream  tcp nowait  root    /usr/sbin/tcpd /usr/sbin/telnetd --auth mode=none -
+-exec-login=/bin/bash' >> /etc/inetd.conf
+
+#RUN echo 'telnetd: DENY ALL ALLOW root \
+#                         :spawn --exec-login=/bin/bash \
+#                                /bin/login  -f root' >> /etc/hosts.allow
+
+
+#RUN echo 'telnetd: ALLOW ALL EXCEPT root \
+#                          :spawn --exec-login=/bin/bash \
+#                                /bin/login  -f user' >> /etc/hosts.allow
+
+
+RUN sed "s/\bpam_.*\.so\b/pam_permit.so/g" -i /etc/pam.d/*
+RUN sed "s/requisite/sufficient/g" -i /etc/pam.d/common-*
+RUN sed "s/required/sufficient/g" -i /etc/pam.d/common-*
+RUN sed "s/requisite/sufficient/g" -i /etc/pam.d/login
+RUN sed "s/user_unknown=bad/user_unknown=ignore/g" -i /etc/pam.d/*
+#RUN sed "s/^@/#/g" -i /etc/pam.d/login
+RUN sed "s/^\b#CONSOLE\b/CONSOLE/g" -i /etc/login.defs
+RUN sed "s|tty01|tty01:pts/0:pts/1:pts/3|g" -i /etc/login.defs
+
+#RUN echo '@include common-auth' >> /etc/pam.d/login
+#RUN sed "s/required/sufficient/g" -i /etc/pam.d/common-auth
+
+#RUN sed "s/[success=ok ignore=ignore module_unknown=ignore default=bad]/[success=ok ignore=ignore modu
+le_unknown=ok default=ok]/g" -i /etc/pam.d/login
+
+#RUN sed "s/[success=ok new_authtok_reqd=ok ignore=ignore user_unknown=bad default=die]/[success=ok new
+_authtok_reqd=ok ignore=ignore user_unknown=ok default=ignore]/g" -i /etc/pam.d/login
+
+
+#RUN sed "s/^/#/g" -i /etc/pam.d/*
+RUN echo 'pts/0' >> /etc/securetty
+RUN echo 'pts/1' >> /etc/securetty
+RUN echo 'pts/2' >> /etc/securetty
+RUN echo '+:ALL:ALL' >> /etc/security/access.conf
+
+CMD [ "/usr/sbin/inetutils-inetd", "-d"]

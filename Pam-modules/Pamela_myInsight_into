@@ -1,0 +1,124 @@
+# Pam modules - observations and notes
+
+## Big take aways
+1. There are a ton of Man pages on Pam modules and the files to which they are related. My main issue with understanding these was that very seldom were examples given for the actual syntax and so was left guessing through iteration.
+2. Pam modules exact syntax and implementation varies between distributions of linux so often times material found during research may not be correct although it looks identical. This also means the any stack-overflow or ect. answers need to be taken with a grain of salt as I found in about 20/20 examples they were not relevant to our use case.
+3. Pam modules syntax and implementation varies even on the exact same distro, greatly, depending upon which packages and programs are installed.
+4. There are sometimes multiple different packages and and programs which run the same service, like telnet for the same distrobution and the pam modules and configuration is totally different between them.
+5. The authentication and security systems of linux [at least my experience with debian and derivatives] are built in almost patch work overlapping layers on top of older packages which used to perform the same functions but with less security. Depending on how you disable the higher level authentication you will drop down into multiple different programs/ areas of the operating system. For example; login.conf, hosts.allow/deny, securetty, /usr/sbin/telnet, /usr/sbin/in.telnet, /usr/sbin/tcpd
+6. Just dealing with one layer, say for example the tcp wrapper run by /usr/sbin/tcpd that may drop you into an area that you were not expecting at all-- and this is determined by a rather tricky syntax and organization of the pam.d/* modules
+7. Funny things that I didn't find anywhere actually seemed to have the largest impact on the functioning of the containers, like say for example whether any users had been added, or whether root had been given a password. Things like this often changed the entire functioning of the services.
+8. There are often several locations or files which relate to each authorization module.
+
+## Examples of Pam auth modules within different of the common-* modules
+@include common-auth
+
+@include common-account
+@include common-session
+@include common-password
+
+common-auth
+
+auth [success=1 default=ignore] pam_unix.so nullok_secure
+auth requisite pam_deny.so
+auth required pam_permit.so
+
+common-account
+
+account	[success=1 new_authtok_reqd=done default=ignore]	pam_permit.so
+account	sufficient	pam_permit.so
+account	required	pam_permit.so
+
+
+### Here is from a forum answer analyzing flow through some pam syntax
+
+---
+
+Let's analyze the authentication section of your PAM configuration in detail.
+
+auth        sufficient    pam_unix.so nullok try_first_pass
+The first line says: "If this test is successful, stop checking any further and accept the login; if it fails, keep checking. Check for users/passwords configured in /etc/passwd and /etc/shadow.If the user exists and the password field is blank, user is allowed in." This is the authentication check for local user accounts.
+
+auth        requisite     pam_succeed_if.so uid >= 500 quiet
+The second line says: "If this test fails, stop checking any further and reject the login; if successful, keep checking. The user's UID value must be 500 or greater." This prevents logins to system accounts using passwords in AD or other shared user database.
+
+auth        sufficient    pam_sss.so use_first_pass
+The third line says: "If this test is successful, stop checking any further and accept the login; if it fails, keep checking. Check with SSSD." This is the check for AD accounts.
+
+auth        required      pam_env.so
+The fourth line says: "If this line fails, reject the login; but keep checking to the end of this section in any case. Set any environment variables described in /etc/security/pam_env.conf and/or /etc/environment."
+
+Now think of what will happen if the user exists (either in AD or in local /etc/passwd) but the password checks fail. First, pam_unix.so fails; but that cannot cause a rejection because that would stop you from using any AD-based user accounts.
+
+So the process goes on to the second line. If the user has a valid UID mapping and the UID number is 500 or greater, this will pe successful too. The only ways this would fail would be if the UID was less than 500.
+
+The third line makes the AD check; this fails too. But again, "sufficient" is used to allow configuring any other authentication methods after this one, so the process continues, just as with pam_unix.so.
+
+At this point, the fourth line must be executed successfully to allow the user in. But this is just setting environment variables. man pam_env tells me the pam_env.so module will return a PAM_SUCCESS value if the environment variables were successfully set. But because this is the last PAM module in this stack, and none of the other modules will have put in an absolute rejection so far, the result of this module will become the overall result of the authentication phase.
+
+To fix this, the authentication phase needs a pam_deny.so at the very end, to stop any login attempts whenever all the actual authentication mechanisms have failed to accept the user.
+
+Also, the pam_env.so should probably happen earlier in the process, so that the environment variable initialization would happen the same way for all valid users. If this does not work at the beginning of the auth phase, then the pam_env.so should probably go to the session phase instead; man pam_env says it will work in either auth or session phases.
+
+So, my initial suggestion would be to change the auth section of your PAM configuration to this:
+
+auth        required      pam_env.so
+auth        sufficient    pam_unix.so nullok try_first_pass
+auth        requisite     pam_succeed_if.so uid >= 500 quiet
+auth        sufficient    pam_sss.so use_first_pass
+auth        requisite     pam_deny.so
+
+---
+
+### Another forum response about an older version of ubuntu, syntax nearly identicle- did not work at all for me
+
+---
+
+This configuration was tested on Ubuntu 16.04.1 LTS Server. Modify /etc/pam.d/common-auth.
+
+# [...]
+auth [success=2 default=ignore] pam_unix.so nullok_secure
+auth [success=1 default=ignore] pam_succeed_if.so user = the_username
+# [...]
+auth requisite pam_deny.so
+# [...]
+auth required pam_permit.so
+# [...]
+The success=x portion tells PAM to skip x rules on success.
+Substitute the real username for the_username, above.
+So, all users first try to authenticate with pam_unix.so, which requires a correct username and password in order to succeed. If authentication succeeds with pam_unix.so, then proceed to pam_permit.so. That's the default behavior.
+
+If authentication failed with pam_unix.so, proceed to pam_succeed_if.so, which succeeds whenever a user enters the username of the_username, using whatever password was entered. If both pam_unix.so and pam_succeed_if.so fail, then proceed to pam_deny.so; otherwise, proceed to pam_permit.so.
+
+A word of caution: be very careful on a live system because it's easy to make a mistake and lock yourself out, probably requiring a fix via rescue media
+
+---
+
+### Example of the pam.d/commmon-auth
+
+# /etc/pam.d/common-auth - authentication settings common to all services
+#
+# This file is included from other service-specific PAM config files,
+# and should contain a list of the authentication modules that define
+# the central authentication scheme for use on the system
+# (e.g., /etc/shadow, LDAP, Kerberos, etc.).  The default is to use the
+# traditional Unix authentication mechanisms.
+#
+# As of pam 1.0.1-6, this file is managed by pam-auth-update by default.
+# To take advantage of this, it is recommended that you configure any
+# local modules either before or after the default block, and use
+# pam-auth-update to manage selection of other modules.  See
+# pam-auth-update(8) for details
+
+# here are the per-package modules (the "Primary" block)
+auth	[success=1 default=ignore]	pam_permit.so nullok_secure
+# here's the fallback if no module succeeds
+auth	optional			pam_permit.so
+# prime the stack with a positive return value if there isn't one already;
+# this avoids us returning an error just because nothing sets a success code
+# since the modules above will each just jump around
+auth	sufficient			pam_permit.so
+# and here are more per-package modules (the "Additional" block)
+# end of pam-auth-update config
+
+
