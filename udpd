@@ -1,0 +1,14 @@
+example of simple GNU netcat dockerfile
+https://hub.docker.com/r/jgkamat/netcat/dockerfile
+
+netcat udp server
+### create http server and specify udp protocol
+https://platformengineer.com/linux-terminal-create-tcp-udp-server-and-client-using-netcat/
+nc -u -l <port#>
+-u : set udp mode
+-l : set listen state; creates simple http server for inc connections
+closest approximation of a straight UDP server I can find
+no specific udp port as it is a transport layer protocol
+
+sending and receiving basic udp packets
+https://linuxhint.com/send_receive_udp_packets_linux_cli/
