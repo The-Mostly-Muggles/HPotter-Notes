@@ -14,3 +14,6 @@ https://www.digitalocean.com/community/tutorials/how-to-configure-bind-as-a-cach
 
 docker hub also has an official BIND9 image, could possibly just use that.
 https://hub.docker.com/_/bind9
+
+Configuring a Public BIND DNS
+http://books.gigatux.nl/mirror/linuxcookbook/0596006403/linuxckbk-CHP-24-SECT-18.html
